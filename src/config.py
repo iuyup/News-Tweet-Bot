@@ -23,6 +23,17 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(..., alias="ANTHROPIC_API_KEY")
     claude_model: Literal["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5"] = "claude-sonnet-4-6"
 
+    # ── MiniMax ────────────────────────────────────────────────────────────
+    minimax_api_key: str = Field("", alias="MINIMAX_API_KEY")
+    minimax_model: str = "MiniMax-M2.5"
+
+    # ── DeepSeek ───────────────────────────────────────────────────────────
+    deepseek_api_key: str = Field("", alias="DEEPSEEK_API_KEY")
+    deepseek_model: str = "deepseek-chat"
+
+    # ── LLM Provider ───────────────────────────────────────────────────────
+    default_llm_provider: Literal["claude", "minimax", "deepseek"] = "minimax"
+
     # ── Twitter/X API v2 ─────────────────────────────────────────────────
     twitter_api_key: str = Field(..., alias="TWITTER_API_KEY")
     twitter_api_secret: str = Field(..., alias="TWITTER_API_SECRET")
@@ -33,34 +44,6 @@ class Settings(BaseSettings):
     reddit_limit_per_sub: int = 10
     http_timeout: float = 15.0
     http_user_agent: str = "Mozilla/5.0 (compatible; news-bot/1.0)"
-
-    nitter_instances: str = (
-        "nitter.privacydev.net,"
-        "nitter.poast.org,"
-        "nitter.lucahammer.com,"
-        "nitter.rawbit.ch,"
-        "nitter.kyoko.jp,"
-        "nitter.bus-hit.me,"
-        "nitter.esmailelbob.xyz"
-    )
-
-    @model_validator(mode="before")
-    @classmethod
-    def _parse_nitter_instances(cls, values: dict) -> dict:
-        v = values.get("nitter_instances")
-        if v is None:
-            return values
-        if isinstance(v, list):
-            values["nitter_instances"] = ",".join(v)
-        return values
-
-    @model_validator(mode="after")
-    def _parse_nitter_instances_after(self) -> "Settings":
-        if isinstance(self.nitter_instances, str):
-            self.nitter_instances = [
-                i.strip() for i in self.nitter_instances.split(",") if i.strip()
-            ]
-        return self
 
     # ── 推文生成规范 ──────────────────────────────────────────────────────
     tweet_max_length: int = 280

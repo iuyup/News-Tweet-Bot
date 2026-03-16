@@ -6,7 +6,7 @@
 
 - **数据抓取**：从 Reddit 热帖（7 个目标 subreddit）、Nitter 热搜（7 个备用实例）获取热点
 - **内容过滤**：去重、分类（时政/科技）、质量筛选
-- **AI 生成**：调用 Claude 生成符合规范的英文推文（≤280字符，含 hashtag）
+- **AI 生成**：调用 LLM（默认 DeepSeek）生成符合规范的英文推文（≤280字符，含 hashtag）
 - **自动发布**：通过 Twitter API v2 自动发布推文
 - **定时调度**：每日北京时间 9:00 自动执行（可配置多个时间点）
 - **Markdown 生成**：每日自动生成 Markdown 文件，支持增量更新
@@ -15,7 +15,7 @@
 ## 技术栈
 
 - Python 3.10+ (async/await)
-- Anthropic Claude SDK
+- LLM: DeepSeek（默认）、Anthropic Claude、MiniMax
 - Twitter/X API v2 (tweepy OAuth 1.0a)
 - APScheduler
 - httpx / pydantic / beautifulsoup4
@@ -76,7 +76,7 @@ python -m src.scheduler.cron
 
 1. **抓取**：并发抓取 Reddit（7 个目标 subreddit）和 Nitter（7 备用实例）
 2. **去重 + 过滤**：去除已发布和批次内重复，过滤 UNKNOWN 分类，按热度排序
-3. **生成**：调用 Claude 按分类（POLITICS/TECH）生成英文推文
+3. **生成**：调用 LLM（默认 DeepSeek）按分类（POLITICS/TECH）生成英文推文
 4. **发布**：逐条发布推文，**每条推文发送成功后立即增量更新 Markdown**
 5. **总结**：LLM 生成每日新闻摘要，追加到 Markdown
 6. **日志**：写入 JSONL 日志（含 token 用量）
@@ -129,7 +129,7 @@ src/
 ├── prompts/
 │   └── templates.py   # 推文生成 Prompt 模板
 ├── generator/
-│   └── llm.py         # Claude LLM 推文生成
+│   └── llm.py         # LLM 推文生成（支持 Claude/DeepSeek/MiniMax）
 ├── publisher/
 │   └── twitter.py     # Twitter/X API 发布
 ├── scheduler/
@@ -154,8 +154,13 @@ data/
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
+| `DEFAULT_LLM_PROVIDER` | deepseek | LLM 提供商 (claude/minimax/deepseek) |
+| `DEEPSEEK_API_KEY` | (可选) | DeepSeek API 密钥 |
+| `DEEPSEEK_MODEL` | deepseek-chat | DeepSeek 模型 |
 | `ANTHROPIC_API_KEY` | (必填) | Anthropic API 密钥 |
 | `CLAUDE_MODEL` | claude-sonnet-4-6 | Claude 模型 |
+| `MINIMAX_API_KEY` | (可选) | MiniMax API 密钥 |
+| `MINIMAX_MODEL` | MiniMax-M2.5 | MiniMax 模型 |
 | `TWITTER_API_KEY` | (必填) | Twitter API Key |
 | `TWITTER_API_SECRET` | (必填) | Twitter API Secret |
 | `TWITTER_ACCESS_TOKEN` | (必填) | Twitter Access Token |

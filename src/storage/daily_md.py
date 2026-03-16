@@ -54,7 +54,6 @@ def write_daily_md(
 
     # 按来源统计
     reddit_count = sum(1 for item in news_items if item.source == "reddit")
-    nitter_count = sum(1 for item in news_items if item.source == "nitter")
     deduped_count = len(news_items)
 
     # 按分类整理新闻
@@ -68,7 +67,6 @@ def write_daily_md(
         "",
         "## 抓取概览",
         f"- Reddit: {reddit_count} 条",
-        f"- Nitter: {nitter_count} 条",
         f"- 去重后: {deduped_count} 条",
         "",
     ]
@@ -95,12 +93,15 @@ def write_daily_md(
             lines.append(f"{i}. [{item.title}]({item.url}) - 评分: {item.score}")
         lines.append("")
 
-    # 每日总结
+    # 每日总结（避免重复添加）
     if summary:
-        lines.append("## 每日总结")
-        lines.append("")
-        lines.append(summary)
-        lines.append("")
+        # 检查是否已存在每日总结
+        has_summary = any("## 每日总结" in line for line in lines)
+        if not has_summary:
+            lines.append("## 每日总结")
+            lines.append("")
+            lines.append(summary)
+            lines.append("")
 
     # 发布的推文
     lines.append("## 发布的推文")
@@ -153,14 +154,12 @@ def update_daily_md_incremental(
         # 文件不存在，创建新文件（包含抓取概览）
         news_count = len(news_items)
         reddit_count = sum(1 for item in news_items if item.source == "reddit")
-        nitter_count = sum(1 for item in news_items if item.source == "nitter")
 
         lines = [
             f"# 每日推文 - {date_str}",
             "",
             "## 抓取概览",
             f"- Reddit: {reddit_count} 条",
-            f"- Nitter: {nitter_count} 条",
             f"- 去重后: {news_count} 条",
             "",
             "## 发布的推文",

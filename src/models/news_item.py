@@ -12,9 +12,9 @@ class Category(str, Enum):
 class NewsItem(BaseModel):
     title: str
     url: str
-    source: str          # "reddit" | "nitter"
+    source: str          # "reddit"
     category: Category
-    score: int = 0       # 热度分（reddit upvotes / nitter 转发数）
+    score: int = 0       # 热度分（reddit upvotes）
     fetched_at: datetime = None
 
     def model_post_init(self, __context):

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 async def main() -> None:
     scheduler = AsyncIOScheduler()
-    schedule_hours = getattr(settings, "schedule_hours", [settings.schedule_hour])
+    schedule_hours = ",".join(str(h) for h in settings.schedule_hours)
     scheduler.add_job(
         run_workflow,
         trigger=CronTrigger(
@@ -34,12 +34,11 @@ async def main() -> None:
         misfire_grace_time=300,
     )
     scheduler.start()
-    hours_str = ",".join(f"{h:02d}" for h in schedule_hours)
+    hours_str = schedule_hours
     logger.info(
-        "调度器已启动，每天 %s:%02d 北京时间执行 %d 次",
+        "调度器已启动，每天 %s:%02d 北京时间执行",
         hours_str,
         settings.schedule_minute,
-        len(schedule_hours),
     )
 
     try:

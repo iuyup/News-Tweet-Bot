@@ -3,70 +3,8 @@
 """
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from src.scrapers.nitter_scraper import fetch_trending_from, classify
 from src.scrapers.reddit_scraper import fetch_subreddit
 from src.models.news_item import Category
-
-
-class TestNitterScraper:
-    """Nitter 抓取器测试"""
-
-    def test_classify_tech(self):
-        """测试技术关键词分类"""
-        assert classify("OpenAI announces GPT-5") == Category.TECH
-        assert classify("AI breakthrough in quantum computing") == Category.TECH
-        assert classify("Nvidia releases new chip") == Category.TECH
-        assert classify("Apple launches new product") == Category.TECH
-
-    def test_classify_politics(self):
-        """测试政治关键词分类"""
-        assert classify("US election results") == Category.POLITICS
-        assert classify("NATO summit meeting") == Category.POLITICS
-        assert classify("Ukraine war update") == Category.POLITICS
-
-    def test_classify_unknown(self):
-        """测试未知分类"""
-        assert classify("Random news headline") == Category.UNKNOWN
-        assert classify("Weather forecast") == Category.UNKNOWN
-
-    @pytest.mark.asyncio
-    async def test_fetch_trending_success(self):
-        """测试成功抓取热搜"""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.text = """
-        <html>
-            <div class="tweet-content">Test trending topic #1</div>
-            <div class="tweet-content">Test trending topic #2</div>
-        </html>
-        """
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-
-        items, error = await fetch_trending_from(mock_client, "https://nitter.example.com")
-
-        assert error is None
-        assert len(items) >= 0  # 可能为空因为解析逻辑
-
-    @pytest.mark.asyncio
-    async def test_fetch_trending_http_error(self):
-        """测试 HTTP 错误处理"""
-        from httpx import HTTPStatusError
-
-        mock_response = MagicMock()
-        mock_response.status_code = 404
-        mock_response.raise_for_status.side_effect = HTTPStatusError(
-            "Not Found", request=MagicMock(), response=mock_response
-        )
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-
-        items, error = await fetch_trending_from(mock_client, "https://nitter.example.com")
-
-        assert len(items) == 0
-        assert error is not None
 
 
 class TestRedditScraper:
