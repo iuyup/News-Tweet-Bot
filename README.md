@@ -4,18 +4,36 @@
 
 ## 架构概览
 
-```mermaid
-flowchart LR
-    START(["▶ START"]) --> SR["SourceRouter"]
-    SR --> CO["Collector"]
-    CO --> AN["Analyst"]
-    AN -- "should_tweet=False" --> SKIP(["⏭ END"])
-    AN --> CP["ContentPlanner"]
-    CP --> WR["Writer"]
-    WR --> RV["Reviewer"]
-    RV -- "通过 / 超限" --> PB["Publisher"]
-    RV -- "未通过 ≤2次" --> WR
-    PB --> END(["⏹ END"])
+```
+┌─────────────────────────────────────────────────────────┐
+│                      StateGraph                         │
+│                                                         │
+│   SourceRouter ──► Collector ──► Analyst                │
+│       │                            │                    │
+│    LLM选源                      LLM选题                  │
+│    失败fallback                 失败降级                 │
+│  [reddit,hn]                   (top6规则)               │
+│                                    │                    │
+│                          should_tweet=False             │
+│                                    │ ──────────► END    │
+│                                    │                    │
+│                           ContentPlanner                │
+│                            (规则式配比)                  │
+│                                    │                    │
+│                    ┌──────────── Writer ◄──────┐        │
+│                    │             │ LLM生成/修改 │        │
+│                    │             ▼             │        │
+│                    │          Reviewer         │        │
+│                    │        LLM 5维评审         │       |
+│                    │     score≥7.0 → 通过      │        │
+│                    │     score<7.0 且          │        │
+│                    │     revision<2 ───────────┘        │
+│                    │     revision≥2 → 强制通过           │
+│                    │             │                      │
+│                    └──────────── ▼                      │
+│                            Publisher                    │
+│                   发布 → SQLite → Markdown → JSONL      │
+└─────────────────────────────────────────────────────────┘
 ```
 
 | 节点 | 职责 | LLM |
