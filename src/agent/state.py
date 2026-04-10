@@ -28,7 +28,15 @@ class TweetAgentState(TypedDict):
     should_tweet: NotRequired[bool]
     analysis_reasoning: NotRequired[str]
     content_plan: NotRequired[dict]
-    review_score: NotRequired[float]
-    review_feedback: NotRequired[str]
+
+    # ── Reviewer 五维评审 ─────────────────────────────────────────────────
+    review_score: NotRequired[float]       # 加权总分
     review_passed: NotRequired[bool]
+    review_feedback: NotRequired[str]
     revision_count: NotRequired[int]
+    # 五维原始得分
+    engagement: NotRequired[float]
+    accuracy: NotRequired[float]
+    clarity: NotRequired[float]
+    originality: NotRequired[float]
+    length: NotRequired[float]

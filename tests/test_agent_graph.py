@@ -254,19 +254,26 @@ class TestReviewerNode:
     @pytest.mark.asyncio
     async def test_reviewer_pass(self):
         tweets = _make_tweets(_make_items())
-        resp = '{"review_passed": true, "score": 8.5, "feedback": ""}'
+        # 五维得分：engagement=3.5, accuracy=2.0, clarity=0.9, originality=0.8, length=1.3 → 加权总分=8.5
+        resp = '{"review_passed": true, "engagement": 3.5, "accuracy": 2.0, "clarity": 0.9, "originality": 0.8, "length": 1.3, "feedback": ""}'
         with patch("src.agent.nodes.reviewer.call_default_llm", new_callable=AsyncMock, return_value=resp):
             from src.agent.nodes.reviewer import reviewer_node
             result = await reviewer_node({"generated_tweets": tweets, "revision_count": 0})
 
         assert result["review_passed"] is True
         assert result["review_score"] == 8.5
+        assert result["engagement"] == 3.5
+        assert result["accuracy"] == 2.0
+        assert result["clarity"] == 0.9
+        assert result["originality"] == 0.8
+        assert result["length"] == 1.3
         assert result["revision_count"] == 0  # 通过时不递增
 
     @pytest.mark.asyncio
     async def test_reviewer_fail_increments_count(self):
         tweets = _make_tweets(_make_items())
-        resp = '{"review_passed": false, "score": 5.5, "feedback": "Hook too weak, add data."}'
+        # 五维得分：engagement=2.0, accuracy=1.5, clarity=0.7, originality=0.6, length=0.7 → 加权总分=5.5
+        resp = '{"review_passed": false, "engagement": 2.0, "accuracy": 1.5, "clarity": 0.7, "originality": 0.6, "length": 0.7, "feedback": "Hook too weak, add data."}'
         with patch("src.agent.nodes.reviewer.call_default_llm", new_callable=AsyncMock, return_value=resp):
             from src.agent.nodes.reviewer import reviewer_node
             result = await reviewer_node({"generated_tweets": tweets, "revision_count": 0})

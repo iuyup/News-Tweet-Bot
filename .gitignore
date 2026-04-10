@@ -39,3 +39,8 @@ build/
 
 
 =*
+
+/data/cache/
+/data/logs/
+/data/daily/
+

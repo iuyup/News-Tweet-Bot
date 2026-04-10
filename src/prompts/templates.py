@@ -44,10 +44,52 @@ Respond ONLY with this JSON:
 If there are truly no worthy stories, set should_tweet to false and selected_indices to []."""
 
 
-def build_reviewer_prompt(tweets: list[dict]) -> str:
+# 动态权重配置
+REVIEW_WEIGHTS = {
+    Category.POLITICS: {
+        "engagement": 3,
+        "accuracy": 3,
+        "clarity": 1.5,
+        "originality": 1,
+        "length": 1.5,
+    },
+    Category.TECH: {
+        "engagement": 4,
+        "accuracy": 2,
+        "clarity": 1,
+        "originality": 1,
+        "length": 2,
+    },
+}
+
+DEFAULT_WEIGHTS = {
+    "engagement": 3.5,
+    "accuracy": 2.5,
+    "clarity": 1.0,
+    "originality": 1.0,
+    "length": 2.0,
+}
+
+
+def build_reviewer_prompt(tweets: list[dict], category: Category | None = None) -> str:
     """
-    构建 Reviewer 提示词：LLM 评审推文质量。
-    返回 JSON: {"review_passed": bool, "score": float, "feedback": str}
+    构建 Reviewer 提示词：LLM 评审推文质量（五维评分）。
+
+    动态权重策略：
+    - Politics类: engagement=3, accuracy=3, clarity=1.5, originality=1, length=1.5
+    - Tech类:    engagement=4, accuracy=2, clarity=1, originality=1, length=2
+    - 其他/默认: engagement=3.5, accuracy=2.5, clarity=1, originality=1, length=2
+
+    返回 JSON: {
+        "review_passed": bool,
+        "engagement": float,
+        "accuracy": float,
+        "clarity": float,
+        "originality": float,
+        "length": float,
+        "feedback": str
+    }
+    注意：LLM 只返回各维度原始得分，加权总分由 reviewer_node 计算
     """
     entries = ""
     for i, entry in enumerate(tweets, 1):
@@ -59,24 +101,32 @@ def build_reviewer_prompt(tweets: list[dict]) -> str:
             f"  Source: {item.title[:120]}\n"
         )
 
+    weights = (
+        REVIEW_WEIGHTS.get(category, DEFAULT_WEIGHTS)
+        if category else DEFAULT_WEIGHTS
+    )
+
     return f"""You are a senior social media editor reviewing tweets before publication.
 {entries}
 Score based on the WEAKEST tweet in the set.
 
-Scoring (10 pts total):
-- Engagement (4 pts): Strong hook, unique angle, sparks debate or response
-- Accuracy (3 pts): Aligned with source headline, not sensationalist
-- Format (3 pts): ≤280 chars, 2-3 relevant hashtags, no URL
+Scoring (10 pts total, weighted):
+- Engagement ({weights["engagement"]} pts): Strong hook, unique angle, sparks debate or response
+- Accuracy ({weights["accuracy"]} pts): Aligned with source headline, not sensationalist
+- Clarity ({weights["clarity"]} pts): Clear language, easy to understand at a glance
+- Originality ({weights["originality"]} pts): Fresh angle, not just repeating headlines
+- Length ({weights["length"]} pts): ≤280 chars, 2-3 relevant hashtags, no URL
 
-Pass threshold: 7.0
+Pass threshold: 7.0 (weighted total)
 
 Respond ONLY with this JSON:
 {{
   "review_passed": true,
-  "score": 8.5,
   "engagement": 3.5,
   "accuracy": 2.5,
-  "format": 2.5,
+  "clarity": 0.9,
+  "originality": 0.8,
+  "length": 1.8,
   "feedback": ""
 }}
 
